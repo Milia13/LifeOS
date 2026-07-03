@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeOS — Tu sistema de productividad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- AUTH SCREENS -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-bg">
+      <div class="auth-orb orb1"></div>
+      <div class="auth-orb orb2"></div>
+      <div class="auth-grid"></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-logo">Life<span>OS</span></div>
+      <div class="auth-tagline">Tu sistema operativo personal</div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="loginEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button class="btn-primary" id="loginBtn" onclick="App.login()">Ingresar</button>
+        <div class="auth-switch">¿No tenés cuenta? <a href="#" onclick="App.showRegister()">Registrate</a></div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" id="regName" type="text" placeholder="Mili">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input class="form-input" id="regUser" type="text" placeholder="mili_os">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="regEmail" type="email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="regPass" type="password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-error" id="regError"></div>
+        <button class="btn-primary" id="regBtn" onclick="App.register()">Crear cuenta</button>
+        <div class="auth-switch">¿Ya tenés cuenta? <a href="#" onclick="App.showLogin()">Iniciá sesión</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="appScreen" style="display:none">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">Life<span>OS</span></div>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-panel="dashboard" onclick="App.switchPanel('dashboard',this)">Dashboard</button>
+          <button class="nav-tab" data-panel="tasks" onclick="App.switchPanel('tasks',this)">Tareas</button>
+          <button class="nav-tab" data-panel="habits" onclick="App.switchPanel('habits',this)">Hábitos</button>
+          <button class="nav-tab" data-panel="notes" onclick="App.switchPanel('notes',this)">Notas</button>
+          <button class="nav-tab" data-panel="calendar" onclick="App.switchPanel('calendar',this)">Calendario</button>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <div class="clock-wrap">
+          <div class="top-clock" id="topClock">--:--</div>
+          <div class="top-date" id="topDate">---</div>
+        </div>
+        <button class="icon-btn" onclick="App.toggleSettings()" title="Personalizar">⚙</button>
+        <button class="icon-btn" onclick="App.toggleMusic()" id="musicBtn" title="Lo-Fi Music">♪</button>
+        <div class="avatar-btn" id="avatarBtn" onclick="App.toggleUserMenu()">M</div>
+        <div class="user-menu" id="userMenu" style="display:none">
+          <div class="user-menu-name" id="menuName">Mili</div>
+          <div class="user-menu-email" id="menuEmail">mili@email.com</div>
+          <hr class="menu-hr">
+          <button class="menu-item" onclick="App.switchPanel('settings-profile'); App.toggleUserMenu()">👤 Mi perfil</button>
+          <button class="menu-item" onclick="App.logout()">🚪 Cerrar sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- PANELS -->
+    <main class="app-main">
+
+      <!-- DASHBOARD -->
+      <section id="panel-dashboard" class="panel-section active">
+        <div class="dashboard-grid">
+          <!-- Greeting + Stats -->
+          <div class="dash-col-left">
+            <div class="greeting-card">
+              <h1 class="greeting-text" id="greetingText">Buenas noches,<br><span id="greetingName" class="accent-text">Mili.</span></h1>
+              <p class="greeting-sub" id="greetingSub">¿Qué vas a conquistar hoy?</p>
+              <div class="mini-stats" id="miniStats"></div>
+            </div>
+
+            <!-- Pomodoro -->
+            <div class="card">
+              <div class="card-title">Pomodoro Timer</div>
+              <div class="pomo-tabs">
+                <button class="pomo-tab active" onclick="Pomo.setMode('focus',this)">Focus</button>
+                <button class="pomo-tab" onclick="Pomo.setMode('short',this)">Short</button>
+                <button class="pomo-tab" onclick="Pomo.setMode('long',this)">Long</button>
+              </div>
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 180 180">
+                  <circle class="ring-bg" cx="90" cy="90" r="80"/>
+                  <circle class="ring-fg" id="ringFg" cx="90" cy="90" r="80"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-time" id="timerDisplay">25:00</div>
+                  <div class="ring-label" id="timerLabel">FOCUS</div>
+                </div>
+              </div>
+              <div class="pomo-controls">
+                <button class="btn-ghost" onclick="Pomo.reset()">↺ Reset</button>
+                <button class="btn-accent" id="pomoStartBtn" onclick="Pomo.toggle()">▶ Start</button>
+              </div>
+              <div class="pomo-sessions">
+                <span id="pomoSessionCount">0</span>/4 sesiones
+                <div class="pomo-dots" id="pomoDots"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: quick tasks + habits today -->
+          <div class="dash-col-right">
+            <div class="card">
+              <div class="card-title">Tareas de hoy <button class="card-link" onclick="App.switchPanel('tasks',null)">Ver todas →</button></div>
+              <div id="dashTasks"></div>
+              <div class="quick-add">
+                <input class="quick-input" id="dashTaskInput" placeholder="Agregar tarea rápida..." onkeydown="if(event.key==='Enter')Tasks.quickAdd()">
+                <button class="btn-sm" onclick="Tasks.quickAdd()">+</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Hábitos de hoy <button class="card-link" onclick="App.switchPanel('habits',null)">Ver todos →</button></div>
+              <div id="dashHabits"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Próximos eventos <button class="card-link" onclick="App.switchPanel('calendar',null)">Ver calendario →</button></div>
+              <div id="dashEvents"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASKS PANEL -->
+      <section id="panel-tasks" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Tareas</h2>
+          <div class="panel-actions">
+            <select id="taskFilter" class="select-sm" onchange="Tasks.render()">
+              <option value="all">Todas</option>
+              <option value="pending">Pendientes</option>
+              <option value="done">Completadas</option>
+            </select>
+            <select id="taskTagFilter" class="select-sm" onchange="Tasks.render()">
+              <option value="all">Todas las categorías</option>
+              <option value="work">Trabajo</option>
+              <option value="life">Personal</option>
+              <option value="urgent">Urgente</option>
+              <option value="general">General</option>
+            </select>
+            <button class="btn-ghost btn-sm" onclick="Tasks.clearDone()">🗑 Limpiar completadas</button>
+          </div>
+        </div>
+        <div class="task-add-bar">
+          <input class="form-input" id="taskTextInput" placeholder="Nueva tarea...">
+          <select class="select-sm" id="taskTagInput">
+            <option value="general">General</option>
+            <option value="work">Trabajo</option>
+            <option value="life">Personal</option>
+            <option value="urgent">Urgente</option>
+          </select>
+          <button class="btn-accent" onclick="Tasks.add()">Agregar</button>
+        </div>
+        <div id="taskListFull"></div>
+      </section>
+
+      <!-- HABITS PANEL -->
+      <section id="panel-habits" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Hábitos</h2>
+        </div>
+        <div class="habit-add-bar">
+          <input class="form-input" id="habitNameInput" placeholder="Nuevo hábito...">
+          <input class="form-input" style="max-width:80px" id="habitIconInput" placeholder="🌟">
+          <button class="btn-accent" onclick="Habits.add()">Agregar</button>
+        </div>
+        <div class="habits-week-header">
+          <span style="flex:1"></span>
+          <div class="week-days">
+            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span class="today-col">H</span>
+          </div>
+          <span style="width:60px;text-align:center;font-size:11px;color:var(--muted)">Racha</span>
+          <span style="width:32px"></span>
+        </div>
+        <div id="habitListFull"></div>
+      </section>
+
+      <!-- NOTES PANEL -->
+      <section id="panel-notes" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Notas</h2>
+          <button class="btn-accent" onclick="Notes.create()">+ Nueva nota</button>
+        </div>
+        <div id="notesGrid" class="notes-grid"></div>
+      </section>
+
+      <!-- CALENDAR PANEL -->
+      <section id="panel-calendar" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Calendario</h2>
+          <button class="btn-accent" onclick="Cal.openModal()">+ Nuevo evento</button>
+        </div>
+        <div class="cal-layout">
+          <div class="cal-grid-wrap">
+            <div class="cal-nav">
+              <button class="btn-ghost btn-sm" onclick="Cal.prevMonth()">←</button>
+              <span class="cal-month-label" id="calMonthLabel"></span>
+              <button class="btn-ghost btn-sm" onclick="Cal.nextMonth()">→</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="cal-events-list">
+            <div class="card-title" id="calSelectedDate">Eventos</div>
+            <div id="calEventsList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS PROFILE -->
+      <section id="panel-settings-profile" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mi Perfil & Personalización</h2>
+        </div>
+        <div class="settings-grid">
+          <div class="card">
+            <div class="card-title">Información personal</div>
+            <div class="form-group">
+              <label class="form-label">Nombre para mostrar</label>
+              <input class="form-input" id="settingName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" id="settingEmail" disabled>
+            </div>
+            <button class="btn-accent" onclick="Settings.saveProfile()">Guardar</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Tema y apariencia</div>
+            <div class="form-group">
+              <label class="form-label">Color de acento</label>
+              <div class="color-swatches" id="colorSwatches"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tema</label>
+              <div class="theme-toggle">
+                <button class="theme-btn active" id="themeDark" onclick="Settings.setTheme('dark',this)">🌙 Oscuro</button>
+                <button class="theme-btn" id="themeLight" onclick="Settings.setTheme('light',this)">☀️ Claro</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Pomodoro</div>
+            <div class="form-group">
+              <label class="form-label">Focus (minutos): <span id="pomFocusVal">25</span></label>
+              <input type="range" min="5" max="60" value="25" id="pomFocus" oninput="Settings.updatePomLabel('pomFocus','pomFocusVal')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short break: <span id="pomShortVal">5</span></label>
+              <input type="range" min="1" max="15" value="5" id="pomShort" oninput="Settings.updatePomLabel('pomShort','pomShortVal')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Long break: <span id="pomLongVal">15</span></label>
+              <input type="range" min="5" max="30" value="15" id="pomLong" oninput="Settings.updatePomLabel('pomLong','pomLongVal')">
+            </div>
+            <button class="btn-accent" onclick="Settings.savePomo()">Guardar</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Cambiar contraseña</div>
+            <div class="form-group">
+              <label class="form-label">Contraseña actual</label>
+              <input class="form-input" id="pwCurrent" type="password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nueva contraseña</label>
+              <input class="form-input" id="pwNew" type="password">
+            </div>
+            <div class="form-error" id="pwError"></div>
+            <button class="btn-accent" onclick="Settings.changePassword()">Actualizar</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="settings-drawer" id="settingsDrawer" style="display:none">
+    <div class="drawer-header">
+      <span>Acceso rápido</span>
+      <button onclick="App.toggleSettings()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-label">Color de acento</div>
+      <div class="color-swatches" id="drawerSwatches"></div>
+      <div class="drawer-label" style="margin-top:16px">Tema</div>
+      <div class="theme-toggle">
+        <button class="theme-btn active" onclick="Settings.setTheme('dark',this)">🌙 Oscuro</button>
+        <button class="theme-btn" onclick="Settings.setTheme('light',this)">☀️ Claro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MUSIC PLAYER -->
+  <div class="music-player" id="musicPlayer" style="display:none">
+    <div class="music-header">
+      <span class="music-title">Lo-Fi Beats</span>
+      <button onclick="App.toggleMusic()">✕</button>
+    </div>
+    <div class="music-tracks" id="musicTracks"></div>
+    <div class="music-controls">
+      <button class="music-btn" onclick="Music.prev()">⏮</button>
+      <button class="music-btn music-play" id="musicPlayBtn" onclick="Music.toggle()">▶</button>
+      <button class="music-btn" onclick="Music.next()">⏭</button>
+    </div>
+    <div class="music-vol">
+      <span>🔈</span>
+      <input type="range" min="0" max="1" step="0.05" value="0.5" id="volSlider" oninput="Music.setVol(this.value)">
+      <span>🔊</span>
+    </div>
+    <div class="music-now" id="musicNow">Seleccioná una pista</div>
+  </div>
+
+  <!-- CALENDAR EVENT MODAL -->
+  <div class="modal-overlay" id="calModal" style="display:none" onclick="if(event.target===this)Cal.closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="calModalTitle">Nuevo evento</span>
+        <button onclick="Cal.closeModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-input" id="calEventTitle">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" id="calEventDate" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input class="form-input" id="calEventTime" type="time">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" id="calEventDesc" placeholder="Opcional">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div class="color-swatches" id="calColorSwatches"></div>
+      </div>
+      <input type="hidden" id="calEventId">
+      <div class="form-error" id="calError"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-accent" onclick="Cal.saveEvent()">Guardar</button>
+        <button class="btn-ghost" onclick="Cal.closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/pomo.js"></script>
+  <script src="/js/tasks.js"></script>
+  <script src="/js/habits.js"></script>
+  <script src="/js/notes.js"></script>
+  <script src="/js/calendar.js"></script>
+  <script src="/js/music.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

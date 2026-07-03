@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LifeOS — Tu sistema de productividad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* ── VARIABLES ─────────────────────────────────────────── */
+:root {
+  --bg: #0e0e11;
+  --surface: #16161a;
+  --surface2: #1e1e24;
+  --border: #2a2a35;
+  --accent: #c8f135;
+  --accent-rgb: 200,241,53;
+  --accent2: #7c6af7;
+  --text: #e8e8f0;
+  --muted: #6b6b80;
+  --danger: #f17070;
+  --good: #5dd88a;
+  --warn: #f0a34a;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'DM Mono', monospace;
+  --font-sans: 'DM Sans', sans-serif;
+  --radius: 8px;
+  --topbar-h: 56px;
+}
+[data-theme="light"] {
+  --bg: #f4f4f6;
+  --surface: #ffffff;
+  --surface2: #ececf2;
+  --border: #d0d0de;
+  --text: #18181c;
+  --muted: #888898;
+}
+
+/* ── RESET ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: var(--font-sans); background: var(--bg); color: var(--text); font-size: 14px; transition: background 0.3s, color 0.3s; }
+a { color: var(--accent); text-decoration: none; }
+input, select, textarea, button { font-family: var(--font-sans); }
+::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── AUTH ──────────────────────────────────────────────── */
+.auth-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.auth-bg { position: absolute; inset: 0; }
+.auth-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.15; }
+.orb1 { width: 400px; height: 400px; background: var(--accent); top: -100px; left: -100px; animation: orbFloat 8s ease-in-out infinite; }
+.orb2 { width: 300px; height: 300px; background: var(--accent2); bottom: -80px; right: -80px; animation: orbFloat 10s ease-in-out infinite reverse; }
+@keyframes orbFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(30px)} }
+.auth-grid { position: absolute; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.3; }
+.auth-card { position: relative; z-index: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 400px; backdrop-filter: blur(20px); }
+.auth-logo { font-family: var(--font-serif); font-size: 28px; font-weight: 900; text-align: center; margin-bottom: 4px; }
+.auth-logo span { color: var(--accent); }
+.auth-tagline { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: center; letter-spacing: 0.15em; margin-bottom: 28px; }
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 11px; font-family: var(--font-mono); letter-spacing: 0.1em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+.form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: var(--radius); font-size: 14px; outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-color: var(--accent); }
+.form-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.form-error { color: var(--danger); font-size: 12px; min-height: 18px; margin-bottom: 8px; }
+.btn-primary { width: 100%; background: var(--accent); color: #000; border: none; padding: 12px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; letter-spacing: 0.02em; }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+.auth-switch { text-align: center; margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+/* ── TOPBAR ────────────────────────────────────────────── */
+.topbar { height: var(--topbar-h); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 100; }
+.topbar-left { display: flex; align-items: center; gap: 24px; }
+.topbar-right { display: flex; align-items: center; gap: 10px; position: relative; }
+.logo { font-family: var(--font-serif); font-size: 18px; font-weight: 900; }
+.logo span { color: var(--accent); }
+.nav-tabs { display: flex; gap: 2px; }
+.nav-tab { background: none; border: none; color: var(--muted); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; font-family: var(--font-sans); transition: all 0.15s; }
+.nav-tab:hover { color: var(--text); background: var(--surface2); }
+.nav-tab.active { color: var(--accent); background: rgba(var(--accent-rgb),0.1); }
+.clock-wrap { text-align: right; }
+.top-clock { font-family: var(--font-mono); font-size: 14px; font-weight: 500; }
+.top-date { font-family: var(--font-mono); font-size: 10px; color: var(--muted); }
+.icon-btn { background: none; border: 1px solid var(--border); color: var(--muted); width: 34px; height: 34px; border-radius: 8px; cursor: pointer; font-size: 16px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+.icon-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(var(--accent-rgb),0.1); }
+.avatar-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #000; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; cursor: pointer; }
+.user-menu { position: absolute; top: 44px; right: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; min-width: 180px; z-index: 200; }
+.user-menu-name { font-weight: 600; padding: 4px 8px; }
+.user-menu-email { font-size: 11px; color: var(--muted); padding: 0 8px 6px; }
+.menu-hr { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.menu-item { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: background 0.15s; }
+.menu-item:hover { background: var(--surface2); }
+
+/* ── LAYOUT ────────────────────────────────────────────── */
+.app-main { height: calc(100vh - var(--topbar-h)); overflow-y: auto; padding: 24px; }
+.panel-section { display: none; }
+.panel-section.active { display: block; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+.panel-title { font-family: var(--font-serif); font-size: 24px; font-weight: 700; }
+.panel-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ── CARDS ─────────────────────────────────────────────── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+.card-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+.card-link { background: none; border: none; color: var(--accent2); font-family: var(--font-mono); font-size: 10px; cursor: pointer; letter-spacing: 0.1em; }
+
+/* ── DASHBOARD GRID ────────────────────────────────────── */
+.dashboard-grid { display: grid; grid-template-columns: 380px 1fr; gap: 16px; }
+.dash-col-left, .dash-col-right { display: flex; flex-direction: column; gap: 16px; }
+.greeting-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.greeting-text { font-family: var(--font-serif); font-size: 28px; font-weight: 900; line-height: 1.2; }
+.accent-text { color: var(--accent); }
+.greeting-sub { color: var(--muted); font-size: 13px; margin-top: 8px; font-family: var(--font-mono); }
+.mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 16px; }
+.mini-stat { text-align: center; background: var(--surface2); border-radius: 6px; padding: 8px; }
+.mini-stat-num { font-family: var(--font-mono); font-size: 20px; font-weight: 500; color: var(--accent); }
+.mini-stat-label { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+/* ── POMODORO ──────────────────────────────────────────── */
+.pomo-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+.pomo-tab { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 6px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: var(--font-mono); letter-spacing: 0.05em; transition: all 0.15s; }
+.pomo-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(var(--accent-rgb),0.1); }
+.ring-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 16px; }
+.ring-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring-bg { fill: none; stroke: var(--surface2); stroke-width: 10; }
+.ring-fg { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 1s linear; stroke-dasharray: 503; stroke-dashoffset: 0; }
+.ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+.ring-time { font-family: var(--font-mono); font-size: 26px; font-weight: 500; }
+.ring-label { font-size: 10px; color: var(--muted); letter-spacing: 0.15em; margin-top: 2px; }
+.pomo-controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+.pomo-sessions { font-family: var(--font-mono); font-size: 11px; color: var(--muted); text-align: center; }
+.pomo-dots { display: flex; gap: 5px; justify-content: center; margin-top: 6px; }
+.pomo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.3s; }
+.pomo-dot.done { background: var(--accent); }
+
+/* ── BUTTONS ───────────────────────────────────────────── */
+.btn-accent { background: var(--accent); color: #000; border: none; padding: 8px 18px; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 600; transition: opacity 0.2s; }
+.btn-accent:hover { opacity: 0.85; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 16px; border-radius: var(--radius); cursor: pointer; font-size: 13px; transition: border-color 0.2s; }
+.btn-ghost:hover { border-color: var(--accent); }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.select-sm { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 12px; outline: none; font-family: var(--font-mono); }
+
+/* ── TASKS ─────────────────────────────────────────────── */
+.task-add-bar { display: flex; gap: 10px; margin-bottom: 16px; }
+.task-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease; }
+.task-item:last-child { border-bottom: none; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:none} }
+.task-cb { width: 18px; height: 18px; border-radius: 4px; border: 1.5px solid var(--border); flex-shrink: 0; margin-top: 1px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.task-cb.done { background: var(--good); border-color: var(--good); }
+.task-cb.done::after { content: '✓'; font-size: 11px; color: #000; }
+.task-body { flex: 1; }
+.task-text-el { font-size: 14px; transition: color 0.2s; cursor: pointer; }
+.task-text-el.done { text-decoration: line-through; color: var(--muted); }
+.task-tag-el { display: inline-block; font-family: var(--font-mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; margin-top: 4px; letter-spacing: 0.05em; }
+.tag-work { background: rgba(124,106,247,0.2); color: var(--accent2); }
+.tag-life { background: rgba(93,216,138,0.15); color: var(--good); }
+.tag-urgent { background: rgba(241,112,112,0.15); color: var(--danger); }
+.tag-general { background: var(--surface2); color: var(--muted); }
+.task-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
+.task-del:hover { color: var(--danger); }
+.quick-add { display: flex; gap: 8px; margin-top: 12px; }
+.quick-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 7px 10px; border-radius: 6px; font-size: 13px; outline: none; }
+.quick-input:focus { border-color: var(--accent); }
+.quick-input::placeholder { color: var(--muted); }
+
+/* ── HABITS ────────────────────────────────────────────── */
+.habit-add-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+.habits-week-header { display: flex; align-items: center; gap: 8px; padding: 0 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.week-days { display: flex; gap: 4px; }
+.week-days span { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.week-days .today-col { color: var(--accent); font-weight: 500; }
+.habit-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); animation: fadeIn 0.2s ease; }
+.habit-icon-el { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+.habit-name-el { flex: 1; font-size: 14px; }
+.habit-checks-el { display: flex; gap: 4px; }
+.day-box { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; color: transparent; transition: all 0.15s; }
+.day-box.done { background: var(--accent); border-color: var(--accent); color: #000; }
+.day-box.today { border-color: var(--accent2); }
+.habit-streak-el { font-family: var(--font-mono); font-size: 12px; color: var(--warn); width: 60px; text-align: center; }
+.habit-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; transition: color 0.15s; }
+.habit-del:hover { color: var(--danger); }
+
+/* ── NOTES ─────────────────────────────────────────────── */
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.note-card { border-radius: var(--radius); border: 1px solid var(--border); padding: 16px; cursor: pointer; transition: border-color 0.2s, transform 0.15s; position: relative; }
+.note-card:hover { transform: translateY(-2px); border-color: var(--accent2); }
+.note-card-title { font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+.note-card-body { font-size: 13px; color: var(--muted); line-height: 1.6; max-height: 80px; overflow: hidden; white-space: pre-wrap; }
+.note-card-date { font-family: var(--font-mono); font-size: 10px; color: var(--muted); margin-top: 10px; }
+.note-del-btn { position: absolute; top: 10px; right: 10px; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; opacity: 0; transition: opacity 0.2s; }
+.note-card:hover .note-del-btn { opacity: 1; }
+.note-edit-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.note-editor { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 100%; max-width: 600px; padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.note-editor-title { font-family: var(--font-serif); font-size: 18px; background: transparent; border: none; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--text); outline: none; width: 100%; font-weight: 700; }
+.note-editor-body { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px; border-radius: 6px; min-height: 180px; resize: none; outline: none; font-size: 13px; line-height: 1.7; font-family: var(--font-mono); }
+.note-editor-body:focus { border-color: var(--accent2); }
+
+/* ── CALENDAR ──────────────────────────────────────────── */
+.cal-layout { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.cal-month-label { font-family: var(--font-serif); font-size: 18px; font-weight: 700; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; }
+.cal-day-header { text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--muted); padding: 4px; letter-spacing: 0.1em; }
+.cal-cell { min-height: 70px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 6px; cursor: pointer; transition: border-color 0.15s; }
+.cal-cell:hover { border-color: var(--accent2); }
+.cal-cell.today { border-color: var(--accent); }
+.cal-cell.other-month { opacity: 0.35; }
+.cal-cell.selected { background: rgba(var(--accent-rgb),0.08); }
+.cal-day-num { font-family: var(--font-mono); font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+.cal-cell.today .cal-day-num { color: var(--accent); }
+.cal-event-dot { font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+.cal-events-list { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+.cal-event-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cal-event-item:last-child { border-bottom: none; }
+.cal-event-dot-big { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.cal-event-name { font-size: 13px; font-weight: 500; }
+.cal-event-time { font-family: var(--font-mono); font-size: 11px; color: var(--muted); }
+.cal-event-del { background: none; border: none; color: var(--muted); cursor: pointer; margin-left: auto; }
+.cal-event-del:hover { color: var(--danger); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; width: 100%; max-width: 440px; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; font-family: var(--font-serif); font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+.modal-header button { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+
+/* ── SETTINGS ──────────────────────────────────────────── */
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.settings-drawer { position: fixed; top: var(--topbar-h); right: 0; width: 260px; background: var(--surface); border-left: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 150; border-bottom-left-radius: 12px; }
+.drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.drawer-header button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; }
+.drawer-body { padding: 16px; }
+.drawer-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.15em; color: var(--muted); margin-bottom: 10px; }
+.color-swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.color-swatch { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s, border-color 0.2s; }
+.color-swatch:hover { transform: scale(1.15); }
+.color-swatch.active { border-color: var(--text); }
+.theme-toggle { display: flex; gap: 8px; }
+.theme-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 8px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all 0.15s; }
+.theme-btn.active { border-color: var(--accent); color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+
+/* ── MUSIC ─────────────────────────────────────────────── */
+.music-player { position: fixed; bottom: 20px; right: 20px; width: 240px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; z-index: 150; }
+.music-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.music-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.15em; color: var(--muted); }
+.music-header button { background: none; border: none; color: var(--muted); cursor: pointer; }
+.music-tracks { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; max-height: 120px; overflow-y: auto; }
+.music-track { background: none; border: none; color: var(--muted); text-align: left; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; transition: all 0.15s; }
+.music-track:hover { background: var(--surface2); color: var(--text); }
+.music-track.active { background: rgba(var(--accent-rgb),0.1); color: var(--accent); }
+.music-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+.music-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+.music-btn:hover { border-color: var(--accent); color: var(--accent); }
+.music-play { background: var(--accent); color: #000; border-color: var(--accent); }
+.music-vol { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.music-vol input { flex: 1; }
+.music-now { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: center; margin-top: 8px; letter-spacing: 0.05em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── DASH MINI ITEMS ───────────────────────────────────── */
+.dash-event-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.dash-event-item:last-child { border-bottom: none; }
+.dash-event-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.empty-state { color: var(--muted); font-size: 13px; font-family: var(--font-mono); padding: 12px 0; text-align: center; }
+
+@media (max-width: 900px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+  .cal-layout { grid-template-columns: 1fr; }
+  .nav-tab { padding: 6px 8px; font-size: 12px; }
+}
+</style>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- AUTH SCREENS -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-bg">
+      <div class="auth-orb orb1"></div>
+      <div class="auth-orb orb2"></div>
+      <div class="auth-grid"></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-logo">Life<span>OS</span></div>
+      <div class="auth-tagline">Tu sistema operativo personal</div>
+
+      <!-- Login Form -->
+      <div id="loginForm">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="loginEmail" type="email" placeholder="tu@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div class="form-error" id="loginError"></div>
+        <button class="btn-primary" id="loginBtn" onclick="App.login()">Ingresar</button>
+        <div class="auth-switch">¿No tenés cuenta? <a href="#" onclick="App.showRegister()">Registrate</a></div>
+      </div>
+
+      <!-- Register Form -->
+      <div id="registerForm" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input class="form-input" id="regName" type="text" placeholder="Mili">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input class="form-input" id="regUser" type="text" placeholder="mili_os">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" id="regEmail" type="email" placeholder="tu@email.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input class="form-input" id="regPass" type="password" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-error" id="regError"></div>
+        <button class="btn-primary" id="regBtn" onclick="App.register()">Crear cuenta</button>
+        <div class="auth-switch">¿Ya tenés cuenta? <a href="#" onclick="App.showLogin()">Iniciá sesión</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="appScreen" style="display:none">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="logo">Life<span>OS</span></div>
+        <nav class="nav-tabs">
+          <button class="nav-tab active" data-panel="dashboard" onclick="App.switchPanel('dashboard',this)">Dashboard</button>
+          <button class="nav-tab" data-panel="tasks" onclick="App.switchPanel('tasks',this)">Tareas</button>
+          <button class="nav-tab" data-panel="habits" onclick="App.switchPanel('habits',this)">Hábitos</button>
+          <button class="nav-tab" data-panel="notes" onclick="App.switchPanel('notes',this)">Notas</button>
+          <button class="nav-tab" data-panel="calendar" onclick="App.switchPanel('calendar',this)">Calendario</button>
+        </nav>
+      </div>
+      <div class="topbar-right">
+        <div class="clock-wrap">
+          <div class="top-clock" id="topClock">--:--</div>
+          <div class="top-date" id="topDate">---</div>
+        </div>
+        <button class="icon-btn" onclick="App.toggleSettings()" title="Personalizar">⚙</button>
+        <button class="icon-btn" onclick="App.toggleMusic()" id="musicBtn" title="Lo-Fi Music">♪</button>
+        <div class="avatar-btn" id="avatarBtn" onclick="App.toggleUserMenu()">M</div>
+        <div class="user-menu" id="userMenu" style="display:none">
+          <div class="user-menu-name" id="menuName">Mili</div>
+          <div class="user-menu-email" id="menuEmail">mili@email.com</div>
+          <hr class="menu-hr">
+          <button class="menu-item" onclick="App.switchPanel('settings-profile'); App.toggleUserMenu()">👤 Mi perfil</button>
+          <button class="menu-item" onclick="App.logout()">🚪 Cerrar sesión</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- PANELS -->
+    <main class="app-main">
+
+      <!-- DASHBOARD -->
+      <section id="panel-dashboard" class="panel-section active">
+        <div class="dashboard-grid">
+          <!-- Greeting + Stats -->
+          <div class="dash-col-left">
+            <div class="greeting-card">
+              <h1 class="greeting-text" id="greetingText">Buenas noches,<br><span id="greetingName" class="accent-text">Mili.</span></h1>
+              <p class="greeting-sub" id="greetingSub">¿Qué vas a conquistar hoy?</p>
+              <div class="mini-stats" id="miniStats"></div>
+            </div>
+
+            <!-- Pomodoro -->
+            <div class="card">
+              <div class="card-title">Pomodoro Timer</div>
+              <div class="pomo-tabs">
+                <button class="pomo-tab active" onclick="Pomo.setMode('focus',this)">Focus</button>
+                <button class="pomo-tab" onclick="Pomo.setMode('short',this)">Short</button>
+                <button class="pomo-tab" onclick="Pomo.setMode('long',this)">Long</button>
+              </div>
+              <div class="ring-wrap">
+                <svg class="ring-svg" viewBox="0 0 180 180">
+                  <circle class="ring-bg" cx="90" cy="90" r="80"/>
+                  <circle class="ring-fg" id="ringFg" cx="90" cy="90" r="80"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-time" id="timerDisplay">25:00</div>
+                  <div class="ring-label" id="timerLabel">FOCUS</div>
+                </div>
+              </div>
+              <div class="pomo-controls">
+                <button class="btn-ghost" onclick="Pomo.reset()">↺ Reset</button>
+                <button class="btn-accent" id="pomoStartBtn" onclick="Pomo.toggle()">▶ Start</button>
+              </div>
+              <div class="pomo-sessions">
+                <span id="pomoSessionCount">0</span>/4 sesiones
+                <div class="pomo-dots" id="pomoDots"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: quick tasks + habits today -->
+          <div class="dash-col-right">
+            <div class="card">
+              <div class="card-title">Tareas de hoy <button class="card-link" onclick="App.switchPanel('tasks',null)">Ver todas →</button></div>
+              <div id="dashTasks"></div>
+              <div class="quick-add">
+                <input class="quick-input" id="dashTaskInput" placeholder="Agregar tarea rápida..." onkeydown="if(event.key==='Enter')Tasks.quickAdd()">
+                <button class="btn-sm" onclick="Tasks.quickAdd()">+</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Hábitos de hoy <button class="card-link" onclick="App.switchPanel('habits',null)">Ver todos →</button></div>
+              <div id="dashHabits"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title">Próximos eventos <button class="card-link" onclick="App.switchPanel('calendar',null)">Ver calendario →</button></div>
+              <div id="dashEvents"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASKS PANEL -->
+      <section id="panel-tasks" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Tareas</h2>
+          <div class="panel-actions">
+            <select id="taskFilter" class="select-sm" onchange="Tasks.render()">
+              <option value="all">Todas</option>
+              <option value="pending">Pendientes</option>
+              <option value="done">Completadas</option>
+            </select>
+            <select id="taskTagFilter" class="select-sm" onchange="Tasks.render()">
+              <option value="all">Todas las categorías</option>
+              <option value="work">Trabajo</option>
+              <option value="life">Personal</option>
+              <option value="urgent">Urgente</option>
+              <option value="general">General</option>
+            </select>
+            <button class="btn-ghost btn-sm" onclick="Tasks.clearDone()">🗑 Limpiar completadas</button>
+          </div>
+        </div>
+        <div class="task-add-bar">
+          <input class="form-input" id="taskTextInput" placeholder="Nueva tarea...">
+          <select class="select-sm" id="taskTagInput">
+            <option value="general">General</option>
+            <option value="work">Trabajo</option>
+            <option value="life">Personal</option>
+            <option value="urgent">Urgente</option>
+          </select>
+          <button class="btn-accent" onclick="Tasks.add()">Agregar</button>
+        </div>
+        <div id="taskListFull"></div>
+      </section>
+
+      <!-- HABITS PANEL -->
+      <section id="panel-habits" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Hábitos</h2>
+        </div>
+        <div class="habit-add-bar">
+          <input class="form-input" id="habitNameInput" placeholder="Nuevo hábito...">
+          <input class="form-input" style="max-width:80px" id="habitIconInput" placeholder="🌟">
+          <button class="btn-accent" onclick="Habits.add()">Agregar</button>
+        </div>
+        <div class="habits-week-header">
+          <span style="flex:1"></span>
+          <div class="week-days">
+            <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span class="today-col">H</span>
+          </div>
+          <span style="width:60px;text-align:center;font-size:11px;color:var(--muted)">Racha</span>
+          <span style="width:32px"></span>
+        </div>
+        <div id="habitListFull"></div>
+      </section>
+
+      <!-- NOTES PANEL -->
+      <section id="panel-notes" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mis Notas</h2>
+          <button class="btn-accent" onclick="Notes.create()">+ Nueva nota</button>
+        </div>
+        <div id="notesGrid" class="notes-grid"></div>
+      </section>
+
+      <!-- CALENDAR PANEL -->
+      <section id="panel-calendar" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Calendario</h2>
+          <button class="btn-accent" onclick="Cal.openModal()">+ Nuevo evento</button>
+        </div>
+        <div class="cal-layout">
+          <div class="cal-grid-wrap">
+            <div class="cal-nav">
+              <button class="btn-ghost btn-sm" onclick="Cal.prevMonth()">←</button>
+              <span class="cal-month-label" id="calMonthLabel"></span>
+              <button class="btn-ghost btn-sm" onclick="Cal.nextMonth()">→</button>
+            </div>
+            <div class="cal-grid" id="calGrid"></div>
+          </div>
+          <div class="cal-events-list">
+            <div class="card-title" id="calSelectedDate">Eventos</div>
+            <div id="calEventsList"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS PROFILE -->
+      <section id="panel-settings-profile" class="panel-section">
+        <div class="panel-header">
+          <h2 class="panel-title">Mi Perfil & Personalización</h2>
+        </div>
+        <div class="settings-grid">
+          <div class="card">
+            <div class="card-title">Información personal</div>
+            <div class="form-group">
+              <label class="form-label">Nombre para mostrar</label>
+              <input class="form-input" id="settingName">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input class="form-input" id="settingEmail" disabled>
+            </div>
+            <button class="btn-accent" onclick="Settings.saveProfile()">Guardar</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Tema y apariencia</div>
+            <div class="form-group">
+              <label class="form-label">Color de acento</label>
+              <div class="color-swatches" id="colorSwatches"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Tema</label>
+              <div class="theme-toggle">
+                <button class="theme-btn active" id="themeDark" onclick="Settings.setTheme('dark',this)">🌙 Oscuro</button>
+                <button class="theme-btn" id="themeLight" onclick="Settings.setTheme('light',this)">☀️ Claro</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Pomodoro</div>
+            <div class="form-group">
+              <label class="form-label">Focus (minutos): <span id="pomFocusVal">25</span></label>
+              <input type="range" min="5" max="60" value="25" id="pomFocus" oninput="Settings.updatePomLabel('pomFocus','pomFocusVal')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short break: <span id="pomShortVal">5</span></label>
+              <input type="range" min="1" max="15" value="5" id="pomShort" oninput="Settings.updatePomLabel('pomShort','pomShortVal')">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Long break: <span id="pomLongVal">15</span></label>
+              <input type="range" min="5" max="30" value="15" id="pomLong" oninput="Settings.updatePomLabel('pomLong','pomLongVal')">
+            </div>
+            <button class="btn-accent" onclick="Settings.savePomo()">Guardar</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Cambiar contraseña</div>
+            <div class="form-group">
+              <label class="form-label">Contraseña actual</label>
+              <input class="form-input" id="pwCurrent" type="password">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nueva contraseña</label>
+              <input class="form-input" id="pwNew" type="password">
+            </div>
+            <div class="form-error" id="pwError"></div>
+            <button class="btn-accent" onclick="Settings.changePassword()">Actualizar</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- SETTINGS DRAWER -->
+  <div class="settings-drawer" id="settingsDrawer" style="display:none">
+    <div class="drawer-header">
+      <span>Acceso rápido</span>
+      <button onclick="App.toggleSettings()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-label">Color de acento</div>
+      <div class="color-swatches" id="drawerSwatches"></div>
+      <div class="drawer-label" style="margin-top:16px">Tema</div>
+      <div class="theme-toggle">
+        <button class="theme-btn active" onclick="Settings.setTheme('dark',this)">🌙 Oscuro</button>
+        <button class="theme-btn" onclick="Settings.setTheme('light',this)">☀️ Claro</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MUSIC PLAYER -->
+  <div class="music-player" id="musicPlayer" style="display:none">
+    <div class="music-header">
+      <span class="music-title">Lo-Fi Beats</span>
+      <button onclick="App.toggleMusic()">✕</button>
+    </div>
+    <div class="music-tracks" id="musicTracks"></div>
+    <div class="music-controls">
+      <button class="music-btn" onclick="Music.prev()">⏮</button>
+      <button class="music-btn music-play" id="musicPlayBtn" onclick="Music.toggle()">▶</button>
+      <button class="music-btn" onclick="Music.next()">⏭</button>
+    </div>
+    <div class="music-vol">
+      <span>🔈</span>
+      <input type="range" min="0" max="1" step="0.05" value="0.5" id="volSlider" oninput="Music.setVol(this.value)">
+      <span>🔊</span>
+    </div>
+    <div class="music-now" id="musicNow">Seleccioná una pista</div>
+  </div>
+
+  <!-- CALENDAR EVENT MODAL -->
+  <div class="modal-overlay" id="calModal" style="display:none" onclick="if(event.target===this)Cal.closeModal()">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="calModalTitle">Nuevo evento</span>
+        <button onclick="Cal.closeModal()">✕</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input class="form-input" id="calEventTitle">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input class="form-input" id="calEventDate" type="date">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Hora</label>
+        <input class="form-input" id="calEventTime" type="time">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Descripción</label>
+        <input class="form-input" id="calEventDesc" placeholder="Opcional">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div class="color-swatches" id="calColorSwatches"></div>
+      </div>
+      <input type="hidden" id="calEventId">
+      <div class="form-error" id="calError"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn-accent" onclick="Cal.saveEvent()">Guardar</button>
+        <button class="btn-ghost" onclick="Cal.closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+                  <script>
+
+// ── LocalStorage DB (reemplaza el backend para modo standalone) ──
+const DB = {
+  _col(name){ const d=localStorage.getItem('lifeos_'+name); return d?JSON.parse(d):[]; },
+  _save(name,data){ localStorage.setItem('lifeos_'+name,JSON.stringify(data)); },
+  findAll(col){ return this._col(col); },
+  findOne(col,fn){ return this._col(col).find(fn)||null; },
+  findById(col,id){ return this._col(col).find(r=>r.id===id)||null; },
+  insert(col,obj){
+    const data=this._col(col);
+    const record={id:Date.now()+'_'+Math.random().toString(36).slice(2,6), createdAt:new Date().toISOString(),...obj};
+    data.push(record); this._save(col,data); return record;
+  },
+  update(col,id,updates){
+    const data=this._col(col); const idx=data.findIndex(r=>r.id===id);
+    if(idx===-1)return null;
+    data[idx]={...data[idx],...updates,updatedAt:new Date().toISOString()};
+    this._save(col,data); return data[idx];
+  },
+  delete(col,id){ const data=this._col(col).filter(r=>r.id!==id); this._save(col,data); },
+  deleteWhere(col,fn){ this._save(col,this._col(col).filter(r=>!fn(r))); }
+};
+
+// Simulated user session
+const Auth = {
+  currentUser(){ const u=localStorage.getItem('lifeos_user'); return u?JSON.parse(u):null; },
+  setUser(u){ localStorage.setItem('lifeos_user',JSON.stringify(u)); },
+  clearUser(){ localStorage.removeItem('lifeos_user'); localStorage.removeItem('lifeos_token'); },
+  login(email,password){
+    const users=DB.findAll('users');
+    const user=users.find(u=>u.email===email);
+    if(!user) throw {error:'Credenciales incorrectas'};
+    // Simple hash check (standalone: store hashed with btoa)
+    if(user.password !== btoa(password)) throw {error:'Credenciales incorrectas'};
+    this.setUser(user);
+    localStorage.setItem('lifeos_token','local_token');
+    return user;
+  },
+  register(username,email,password,displayName){
+    const existing=DB.findOne('users',u=>u.email===email||u.username===username);
+    if(existing) throw {error:'El email o usuario ya está registrado'};
+    const user=DB.insert('users',{username,email,password:btoa(password),displayName:displayName||username,accentColor:'#c8f135',theme:'dark'});
+    // Default habits
+    ['Ejercicio 🏃','Leer 30 min 📚','Agua 2L 💧'].forEach(n=>{
+      DB.insert('habits',{userId:user.id,name:n,icon:'⭐',checks:[false,false,false,false,false,false,false],active:true});
+    });
+    this.setUser(user);
+    localStorage.setItem('lifeos_token','local_token');
+    return user;
+  }
+};
+
+// Replace API object with localStorage version
+const API = {
+  uid(){ return Auth.currentUser()?.id; },
+  async get(path){
+    const uid=this.uid();
+    if(path==='/me') return {...Auth.currentUser()};
+    if(path==='/settings'){ return DB.findOne('settings',s=>s.userId===uid)||{}; }
+    if(path==='/tasks'){ return DB.findAll('tasks').filter(t=>t.userId===uid).sort((a,b)=>a.done-b.done||(new Date(b.createdAt)-new Date(a.createdAt))); }
+    if(path==='/habits'){ return DB.findAll('habits').filter(h=>h.userId===uid&&h.active); }
+    if(path==='/notes'){ return DB.findAll('notes').filter(n=>n.userId===uid).sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)); }
+    if(path==='/calendar'){ return DB.findAll('calendar').filter(e=>e.userId===uid).sort((a,b)=>a.date.localeCompare(b.date)); }
+    return {};
+  },
+  async post(path,body){
+    const uid=this.uid();
+    if(path==='/tasks') return DB.insert('tasks',{userId:uid,...body});
+    if(path==='/habits') return DB.insert('habits',{userId:uid,...body,active:true});
+    if(path==='/notes') return DB.insert('notes',{userId:uid,...body});
+    if(path==='/calendar') return DB.insert('calendar',{userId:uid,...body});
+    return {};
+  },
+  async put(path,body){
+    const uid=this.uid();
+    if(path==='/me'){
+      const users=DB.findAll('users'); const idx=users.findIndex(u=>u.id===uid);
+      if(idx>-1){const updated={...users[idx],...body};users[idx]=updated;localStorage.setItem('lifeos_users',JSON.stringify(users));Auth.setUser(updated);return updated;}
+    }
+    if(path==='/me/password'){
+      const user=Auth.currentUser();
+      if(user.password!==btoa(body.currentPassword)) throw {error:'Contraseña actual incorrecta'};
+      DB.update('users',uid,{password:btoa(body.newPassword)}); return {ok:true};
+    }
+    if(path==='/settings'){
+      const s=DB.findOne('settings',s=>s.userId===uid);
+      if(!s) return DB.insert('settings',{userId:uid,...body});
+      return DB.update('settings',s.id,body);
+    }
+    // tasks/habits/notes/calendar by id
+    const parts=path.split('/'); const col=parts[1]; const id=parts[2];
+    return DB.update(col,id,body);
+  },
+  async del(path){
+    const uid=this.uid();
+    if(path==='/tasks'){ DB.deleteWhere('tasks',t=>t.userId===uid&&t.done); return {ok:true}; }
+    const parts=path.split('/'); const col=parts[1]; const id=parts[2];
+    DB.delete(col,id); return {ok:true};
+  },
+  async authPost(path,body){
+    if(path==='/login') return Auth.login(body.email,body.password);
+    if(path==='/register') return Auth.register(body.username,body.email,body.password,body.displayName);
+    throw {error:'Not found'};
+  }
+};
+
+const Pomo = {
+  total: 25*60, remaining: 25*60, running: false, interval: null,
+  sessions: 0, focusMins: 0, mode: 'focus',
+  circ: 2*Math.PI*80,
+  init() {
+    document.getElementById('ringFg').style.strokeDasharray = this.circ;
+    this.render();
+  },
+  setMode(mode, btn) {
+    const mins = { focus: App.settings.pomodoroFocus||25, short: App.settings.pomodoroShort||5, long: App.settings.pomodoroLong||15 }[mode];
+    clearInterval(this.interval); this.running = false;
+    document.getElementById('pomoStartBtn').textContent = '▶ Start';
+    this.mode = mode; this.total = mins*60; this.remaining = mins*60;
+    const colors = { focus:'var(--accent)', short:'var(--good)', long:'var(--accent2)' };
+    document.getElementById('ringFg').style.stroke = colors[mode];
+    document.getElementById('timerLabel').textContent = mode === 'focus' ? 'FOCUS' : mode === 'short' ? 'SHORT BREAK' : 'LONG BREAK';
+    document.querySelectorAll('.pomo-tab').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    this.render();
+  },
+  toggle() {
+    if (this.running) {
+      clearInterval(this.interval); this.running = false;
+      document.getElementById('pomoStartBtn').textContent = '▶ Start';
+    } else {
+      this.running = true;
+      document.getElementById('pomoStartBtn').textContent = '⏸ Pausa';
+      this.interval = setInterval(() => {
+        this.remaining--;
+        if (this.mode === 'focus') this.focusMins += 1/60;
+        this.render();
+        App.updateDashStats();
+        if (this.remaining <= 0) {
+          clearInterval(this.interval); this.running = false;
+          document.getElementById('pomoStartBtn').textContent = '▶ Start';
+          if (this.mode === 'focus') { this.sessions = Math.min(this.sessions+1,4); this.renderDots(); }
+          this.remaining = this.total; this.render();
+        }
+      }, 1000);
+    }
+  },
+  reset() {
+    clearInterval(this.interval); this.running = false;
+    this.remaining = this.total;
+    document.getElementById('pomoStartBtn').textContent = '▶ Start';
+    this.render();
+  },
+  render() {
+    const m = Math.floor(this.remaining/60), s = this.remaining%60;
+    document.getElementById('timerDisplay').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    const offset = this.circ * (1 - this.remaining/this.total);
+    document.getElementById('ringFg').style.strokeDashoffset = offset;
+  },
+  renderDots() {
+    const c = document.getElementById('pomoDots');
+    c.innerHTML = '';
+    for(let i=0;i<4;i++) { const d=document.createElement('div'); d.className='pomo-dot'+(i<this.sessions?' done':''); c.appendChild(d); }
+    document.getElementById('pomoSessionCount').textContent = this.sessions;
+  }
+};
+
+const Tasks = {
+  data: [],
+  async load() {
+    this.data = await API.get('/tasks');
+    this.render(); this.renderDash();
+  },
+  async add() {
+    const text = document.getElementById('taskTextInput').value.trim();
+    const tag = document.getElementById('taskTagInput').value;
+    if (!text) return;
+    const t = await API.post('/tasks', { text, tag });
+    this.data.unshift(t);
+    document.getElementById('taskTextInput').value = '';
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  async quickAdd() {
+    const el = document.getElementById('dashTaskInput');
+    const text = el.value.trim();
+    if (!text) return;
+    const t = await API.post('/tasks', { text, tag:'general' });
+    this.data.unshift(t);
+    el.value = '';
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  async toggle(id) {
+    const t = this.data.find(x=>x.id===id);
+    if (!t) return;
+    t.done = !t.done;
+    await API.put('/tasks/'+id, { done: t.done });
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  async del(id) {
+    await API.del('/tasks/'+id);
+    this.data = this.data.filter(x=>x.id!==id);
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  async clearDone() {
+    await API.del('/tasks');
+    this.data = this.data.filter(x=>!x.done);
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  render() {
+    const filter = document.getElementById('taskFilter')?.value||'all';
+    const tagFilter = document.getElementById('taskTagFilter')?.value||'all';
+    let list = [...this.data];
+    if (filter==='pending') list = list.filter(t=>!t.done);
+    if (filter==='done') list = list.filter(t=>t.done);
+    if (tagFilter!=='all') list = list.filter(t=>t.tag===tagFilter);
+    const el = document.getElementById('taskListFull');
+    if (!el) return;
+    el.innerHTML = list.length ? list.map(t=>this.taskHTML(t)).join('') : '<div class="empty-state">No hay tareas</div>';
+  },
+  renderDash() {
+    const el = document.getElementById('dashTasks');
+    if (!el) return;
+    const top = this.data.filter(t=>!t.done).slice(0,4);
+    el.innerHTML = top.length ? top.map(t=>this.taskHTML(t, true)).join('') : '<div class="empty-state">¡Todo al día! 🎉</div>';
+  },
+  taskHTML(t, mini=false) {
+    return `<div class="task-item">
+      <div class="task-cb ${t.done?'done':''}" onclick="Tasks.toggle('${t.id}')"></div>
+      <div class="task-body">
+        <div class="task-text-el ${t.done?'done':''}">${t.text}</div>
+        ${!mini?`<span class="task-tag-el tag-${t.tag}">${t.tag}</span>`:''}
+      </div>
+      <button class="task-del" onclick="Tasks.del('${t.id}')">×</button>
+    </div>`;
+  }
+};
+
+const Habits = {
+  data: [],
+  async load() {
+    this.data = await API.get('/habits');
+    this.render(); this.renderDash();
+  },
+  async add() {
+    const name = document.getElementById('habitNameInput').value.trim();
+    const icon = document.getElementById('habitIconInput').value.trim() || '⭐';
+    if (!name) return;
+    const h = await API.post('/habits', { name, icon });
+    this.data.push(h);
+    document.getElementById('habitNameInput').value = '';
+    document.getElementById('habitIconInput').value = '';
+    this.render(); this.renderDash();
+  },
+  async toggleDay(id, dayIdx) {
+    const h = this.data.find(x=>x.id===id);
+    if (!h) return;
+    h.checks[dayIdx] = !h.checks[dayIdx];
+    await API.put('/habits/'+id, { checks: h.checks });
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  async del(id) {
+    await API.del('/habits/'+id);
+    this.data = this.data.filter(x=>x.id!==id);
+    this.render(); this.renderDash(); App.updateDashStats();
+  },
+  streak(checks) {
+    let s=0;
+    for(let i=checks.length-1;i>=0;i--) { if(checks[i])s++; else break; }
+    return s;
+  },
+  render() {
+    const el = document.getElementById('habitListFull');
+    if (!el) return;
+    el.innerHTML = this.data.length ? this.data.map(h=>this.habitHTML(h)).join('') : '<div class="empty-state">Agregá tu primer hábito</div>';
+  },
+  renderDash() {
+    const el = document.getElementById('dashHabits');
+    if (!el) return;
+    if (!this.data.length) { el.innerHTML='<div class="empty-state">Sin hábitos todavía</div>'; return; }
+    el.innerHTML = this.data.map(h=>`
+      <div class="habit-row" style="padding:6px 0">
+        <div class="habit-icon-el">${h.icon}</div>
+        <div class="habit-name-el">${h.name}</div>
+        <div class="day-box today ${h.checks[6]?'done':''}" onclick="Habits.toggleDay('${h.id}',6)">${h.checks[6]?'✓':''}</div>
+      </div>`).join('');
+  },
+  habitHTML(h) {
+    const s = this.streak(h.checks);
+    const checks = h.checks.map((c,i)=>`<div class="day-box ${c?'done':''} ${i===6?'today':''}" onclick="Habits.toggleDay('${h.id}',${i})">${c?'✓':''}</div>`).join('');
+    return `<div class="habit-row">
+      <div class="habit-icon-el">${h.icon}</div>
+      <div class="habit-name-el">${h.name}</div>
+      <div class="habit-checks-el">${checks}</div>
+      <div class="habit-streak-el">🔥 ${s}</div>
+      <button class="habit-del" onclick="Habits.del('${h.id}')">×</button>
+    </div>`;
+  }
+};
+
+const Notes = {
+  data: [],
+  editing: null,
+  async load() {
+    this.data = await API.get('/notes');
+    this.render();
+  },
+  async create() {
+    const note = await API.post('/notes', { title:'Nueva nota', content:'' });
+    this.data.unshift(note);
+    this.render();
+    this.openEditor(note.id);
+  },
+  async save() {
+    if (!this.editing) return;
+    const title = document.getElementById('noteEditorTitle').value;
+    const content = document.getElementById('noteEditorBody').value;
+    const updated = await API.put('/notes/'+this.editing, { title, content });
+    const idx = this.data.findIndex(n=>n.id===this.editing);
+    if (idx>-1) this.data[idx] = updated;
+    this.closeEditor();
+    this.render();
+  },
+  async del(id, e) {
+    e.stopPropagation();
+    await API.del('/notes/'+id);
+    this.data = this.data.filter(n=>n.id!==id);
+    this.render();
+  },
+  openEditor(id) {
+    const note = this.data.find(n=>n.id===id);
+    if (!note) return;
+    this.editing = id;
+    const overlay = document.createElement('div');
+    overlay.className = 'note-edit-overlay';
+    overlay.id = 'noteOverlay';
+    overlay.innerHTML = `
+      <div class="note-editor">
+        <input class="note-editor-title" id="noteEditorTitle" value="${note.title}" placeholder="Título">
+        <textarea class="note-editor-body" id="noteEditorBody" placeholder="Escribí aquí...">${note.content}</textarea>
+        <div style="display:flex;gap:8px">
+          <button class="btn-accent" onclick="Notes.save()">Guardar</button>
+          <button class="btn-ghost" onclick="Notes.closeEditor()">Cerrar</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('noteEditorBody').focus();
+  },
+  closeEditor() {
+    this.editing = null;
+    const o = document.getElementById('noteOverlay');
+    if (o) o.remove();
+  },
+  render() {
+    const el = document.getElementById('notesGrid');
+    if (!el) return;
+    el.innerHTML = this.data.length ? this.data.map(n=>`
+      <div class="note-card" style="background:${n.color||'var(--surface)'}" onclick="Notes.openEditor('${n.id}')">
+        <button class="note-del-btn" onclick="Notes.del('${n.id}',event)">×</button>
+        <div class="note-card-title">${n.title}</div>
+        <div class="note-card-body">${n.content||'<em>Vacía</em>'}</div>
+        <div class="note-card-date">${new Date(n.updatedAt||n.createdAt).toLocaleDateString('es-AR')}</div>
+      </div>`).join('') : '<div class="empty-state" style="grid-column:1/-1">No hay notas. ¡Creá una!</div>';
+  }
+};
+
+const Cal = {
+  data: [], year: new Date().getFullYear(), month: new Date().getMonth(),
+  selected: new Date().toISOString().slice(0,10),
+  editingId: null,
+  colors: ['#7c6af7','#c8f135','#5dd88a','#f17070','#f0a34a','#60b4f7'],
+
+  async load() {
+    this.data = await API.get('/calendar');
+    this.renderGrid(); this.renderList(); this.renderDash();
+    this.initColorSwatches();
+  },
+
+  prevMonth() { if(this.month===0){this.month=11;this.year--;}else this.month--; this.renderGrid(); },
+  nextMonth() { if(this.month===11){this.month=0;this.year++;}else this.month++; this.renderGrid(); },
+
+  renderGrid() {
+    const names=['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+    document.getElementById('calMonthLabel').textContent = `${names[this.month]} ${this.year}`;
+    const first = new Date(this.year, this.month, 1).getDay();
+    const days = new Date(this.year, this.month+1, 0).getDate();
+    const today = new Date().toISOString().slice(0,10);
+    let html = ['LUN','MAR','MIÉ','JUE','VIE','SAB','DOM'].map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+    const startOffset = (first+6)%7;
+    const prevDays = new Date(this.year, this.month, 0).getDate();
+    for(let i=startOffset-1;i>=0;i--) {
+      html += `<div class="cal-cell other-month"><div class="cal-day-num">${prevDays-i}</div></div>`;
+    }
+    for(let d=1;d<=days;d++) {
+      const dateStr = `${this.year}-${String(this.month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const isToday = dateStr===today, isSel = dateStr===this.selected;
+      const evs = this.data.filter(e=>e.date===dateStr);
+      const dots = evs.slice(0,3).map(e=>`<div class="cal-event-dot" style="background:${e.color}">${e.title}</div>`).join('');
+      html += `<div class="cal-cell ${isToday?'today':''} ${isSel?'selected':''}" onclick="Cal.selectDate('${dateStr}')">
+        <div class="cal-day-num">${d}</div>${dots}</div>`;
+    }
+    document.getElementById('calGrid').innerHTML = html;
+  },
+
+  selectDate(dateStr) {
+    this.selected = dateStr;
+    this.renderGrid(); this.renderList();
+  },
+
+  renderList() {
+    const evs = this.data.filter(e=>e.date===this.selected);
+    const d = new Date(this.selected+'T12:00:00');
+    document.getElementById('calSelectedDate').textContent = d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+    const el = document.getElementById('calEventsList');
+    el.innerHTML = evs.length ? evs.map(e=>`
+      <div class="cal-event-item">
+        <div class="cal-event-dot-big" style="background:${e.color}"></div>
+        <div>
+          <div class="cal-event-name">${e.title}</div>
+          ${e.time?`<div class="cal-event-time">${e.time}</div>`:''}
+        </div>
+        <button class="cal-event-del" onclick="Cal.del('${e.id}')">×</button>
+      </div>`).join('') : '<div class="empty-state">Sin eventos</div>';
+  },
+
+  renderDash() {
+    const el = document.getElementById('dashEvents');
+    if (!el) return;
+    const today = new Date().toISOString().slice(0,10);
+    const upcoming = this.data.filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date)).slice(0,4);
+    el.innerHTML = upcoming.length ? upcoming.map(e=>`
+      <div class="dash-event-item">
+        <div class="dash-event-dot" style="background:${e.color}"></div>
+        <div>
+          <div style="font-size:13px">${e.title}</div>
+          <div style="font-size:11px;color:var(--muted)">${new Date(e.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})} ${e.time||''}</div>
+        </div>
+      </div>`).join('') : '<div class="empty-state">Sin eventos próximos</div>';
+  },
+
+  openModal(dateStr) {
+    this.editingId = null;
+    document.getElementById('calEventTitle').value = '';
+    document.getElementById('calEventDate').value = dateStr || this.selected;
+    document.getElementById('calEventTime').value = '';
+    document.getElementById('calEventDesc').value = '';
+    document.getElementById('calEventId').value = '';
+    document.getElementById('calModalTitle').textContent = 'Nuevo evento';
+    document.getElementById('calError').textContent = '';
+    document.getElementById('calModal').style.display = 'flex';
+  },
+  closeModal() { document.getElementById('calModal').style.display = 'none'; },
+
+  async saveEvent() {
+    const title = document.getElementById('calEventTitle').value.trim();
+    const date = document.getElementById('calEventDate').value;
+    const color = document.querySelector('#calColorSwatches .color-swatch.active')?.dataset.color || '#7c6af7';
+    if (!title||!date) { document.getElementById('calError').textContent='Título y fecha requeridos'; return; }
+    const payload = { title, date, time: document.getElementById('calEventTime').value, description: document.getElementById('calEventDesc').value, color };
+    const id = document.getElementById('calEventId').value;
+    if (id) {
+      const updated = await API.put('/calendar/'+id, payload);
+      const idx = this.data.findIndex(e=>e.id===id);
+      if(idx>-1) this.data[idx]=updated;
+    } else {
+      const ev = await API.post('/calendar', payload);
+      this.data.push(ev);
+    }
+    this.closeModal(); this.renderGrid(); this.renderList(); this.renderDash();
+  },
+
+  async del(id) {
+    await API.del('/calendar/'+id);
+    this.data = this.data.filter(e=>e.id!==id);
+    this.renderGrid(); this.renderList(); this.renderDash();
+  },
+
+  initColorSwatches() {
+    const el = document.getElementById('calColorSwatches');
+    if (!el) return;
+    el.innerHTML = this.colors.map((c,i)=>`<div class="color-swatch ${i===0?'active':''}" style="background:${c}" data-color="${c}" onclick="Cal.selectColor(this)"></div>`).join('');
+  },
+  selectColor(el) {
+    document.querySelectorAll('#calColorSwatches .color-swatch').forEach(s=>s.classList.remove('active'));
+    el.classList.add('active');
+  }
+};
+
+const Music = {
+  ctx: null, nodes: {}, playing: false, current: 0, vol: 0.4,
+
+  tracks: [
+    { name: '☁️ Lofi Chill', key: 'lofi' },
+    { name: '🌧️ Rain Beats', key: 'rain' },
+    { name: '🌙 Night Study', key: 'night' },
+    { name: '🍵 Cafe Jazz', key: 'jazz' },
+    { name: '🌿 Nature Flow', key: 'nature' },
+  ],
+
+  init() {
+    const el = document.getElementById('musicTracks');
+    el.innerHTML = this.tracks.map((t,i) =>
+      `<button class="music-track" onclick="Music.play(${i})">${t.name}</button>`
+    ).join('');
+  },
+
+  getCtx() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+
+  // Genera un oscilador con frecuencia, tipo y ganancia
+  osc(freq, type, gain, ctx, dest) {
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type;
+    o.frequency.value = freq;
+    g.gain.value = gain;
+    o.connect(g); g.connect(dest);
+    o.start();
+    return { osc: o, gain: g };
+  },
+
+  // Reverb simple con ConvolverNode
+  makeReverb(ctx) {
+    const conv = ctx.createConvolver();
+    const len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) {
+      const d = buf.getChannelData(c);
+      for (let i = 0; i < len; i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2);
+    }
+    conv.buffer = buf;
+    return conv;
+  },
+
+  // Genera ruido filtrado (lluvia, naturaleza)
+  makeNoise(ctx, dest, filterFreq, gain) {
+    const buf = ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass'; f.frequency.value = filterFreq; f.Q.value = 0.5;
+    const g = ctx.createGain(); g.gain.value = gain;
+    src.connect(f); f.connect(g); g.connect(dest);
+    src.start();
+    return { src, filter: f, gain: g };
+  },
+
+  // Secuenciador de notas lo-fi
+  startSequencer(ctx, masterGain, notes, bpm, waveform) {
+    const interval = (60/bpm) * 1000;
+    let step = 0;
+    const id = setInterval(() => {
+      if (!this.playing) return;
+      const freq = notes[step % notes.length];
+      if (freq) {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = waveform;
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.15, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+        o.connect(g); g.connect(masterGain);
+        o.start(); o.stop(ctx.currentTime + 0.45);
+      }
+      step++;
+    }, interval);
+    return id;
+  },
+
+  stopAll() {
+    if (this.nodes.seqId) clearInterval(this.nodes.seqId);
+    if (this.nodes.seqId2) clearInterval(this.nodes.seqId2);
+    if (this.nodes.oscs) this.nodes.oscs.forEach(n => { try { n.osc.stop(); } catch(e){} });
+    if (this.nodes.noises) this.nodes.noises.forEach(n => { try { n.src.stop(); } catch(e){} });
+    this.nodes = {};
+  },
+
+  play(idx) {
+    this.stopAll();
+    this.current = idx;
+    this.playing = true;
+    document.getElementById('musicPlayBtn').textContent = '⏸';
+    document.getElementById('musicNow').textContent = this.tracks[idx].name;
+    document.querySelectorAll('.music-track').forEach((b,i) => b.classList.toggle('active', i===idx));
+
+    const ctx = this.getCtx();
+    const master = ctx.createGain();
+    master.gain.value = this.vol;
+    const reverb = this.makeReverb(ctx);
+    reverb.connect(master);
+    master.connect(ctx.destination);
+    this.nodes.master = master;
+    this.nodes.reverb = reverb;
+    this.nodes.oscs = [];
+    this.nodes.noises = [];
+
+    const key = this.tracks[idx].key;
+
+    if (key === 'lofi') {
+      // Acorde pad + melodía suave
+      [130.8, 164.8, 196, 261.6].forEach(f => {
+        this.nodes.oscs.push(this.osc(f, 'sine', 0.06, ctx, reverb));
+      });
+      // Sub bass pulsante
+      const bass = [65.4, 65.4, 73.4, 65.4, 58.3, 65.4, 73.4, 82.4];
+      this.nodes.seqId = this.startSequencer(ctx, reverb, bass, 75, 'triangle');
+      // Melodía
+      const mel = [523, 0, 587, 659, 0, 523, 0, 494];
+      this.nodes.seqId2 = this.startSequencer(ctx, reverb, mel, 150, 'sine');
+    }
+
+    else if (key === 'rain') {
+      // Lluvia = ruido filtrado en varias frecuencias
+      this.nodes.noises.push(this.makeNoise(ctx, master, 800, 0.08));
+      this.nodes.noises.push(this.makeNoise(ctx, master, 2000, 0.04));
+      this.nodes.noises.push(this.makeNoise(ctx, master, 400, 0.06));
+      // Melodía triste sobre la lluvia
+      const mel = [392, 0, 349, 0, 330, 0, 294, 0];
+      this.nodes.seqId = this.startSequencer(ctx, reverb, mel, 60, 'sine');
+    }
+
+    else if (key === 'night') {
+      // Pad oscuro
+      [110, 138.6, 164.8].forEach(f => {
+        this.nodes.oscs.push(this.osc(f, 'sine', 0.07, ctx, reverb));
+      });
+      // Arpeggio nocturno
+      const arp = [220, 277.2, 329.6, 415.3, 329.6, 277.2, 220, 0];
+      this.nodes.seqId = this.startSequencer(ctx, reverb, arp, 100, 'triangle');
+    }
+
+    else if (key === 'jazz') {
+      // Acordes de jazz (7ma)
+      [261.6, 329.6, 392, 466.2].forEach(f => {
+        this.nodes.oscs.push(this.osc(f, 'triangle', 0.05, ctx, reverb));
+      });
+      // Walking bass
+      const bass = [130.8, 146.8, 164.8, 146.8, 130.8, 123.5, 110, 123.5];
+      this.nodes.seqId = this.startSequencer(ctx, reverb, bass, 120, 'triangle');
+      // Melodía jazzy
+      const mel = [523, 0, 493.9, 440, 0, 466.2, 0, 523];
+      this.nodes.seqId2 = this.startSequencer(ctx, reverb, mel, 120, 'sine');
+    }
+
+    else if (key === 'nature') {
+      // Pájaros = ruido filtrado agudo intermitente
+      this.nodes.noises.push(this.makeNoise(ctx, master, 3000, 0.03));
+      this.nodes.noises.push(this.makeNoise(ctx, master, 600, 0.05));
+      // Melodía relajante pentatónica
+      const penta = [261.6, 293.7, 329.6, 392, 440, 392, 329.6, 293.7];
+      this.nodes.seqId = this.startSequencer(ctx, reverb, penta, 80, 'sine');
+    }
+  },
+
+  toggle() {
+    if (!this.playing && this.nodes.master === undefined) {
+      this.play(this.current);
+      return;
+    }
+    if (this.playing) {
+      this.playing = false;
+      this.stopAll();
+      document.getElementById('musicPlayBtn').textContent = '▶';
+    } else {
+      this.play(this.current);
+    }
+  },
+
+  next() { this.play((this.current+1) % this.tracks.length); },
+  prev() { this.play((this.current-1+this.tracks.length) % this.tracks.length); },
+
+  setVol(v) {
+    this.vol = parseFloat(v);
+    if (this.nodes.master) this.nodes.master.gain.value = this.vol;
+  }
+};
+
+const ACCENT_COLORS = ['#c8f135','#7c6af7','#5dd88a','#f17070','#f0a34a','#60b4f7','#f06aba','#ffffff'];
+
+const Settings = {
+  async load() {
+    const user = App.user;
+    document.getElementById('settingName').value = user.displayName || '';
+    document.getElementById('settingEmail').value = user.email || '';
+    const s = await API.get('/settings');
+    document.getElementById('pomFocus').value = s.pomodoroFocus || 25;
+    document.getElementById('pomShort').value = s.pomodoroShort || 5;
+    document.getElementById('pomLong').value = s.pomodoroLong || 15;
+    document.getElementById('pomFocusVal').textContent = s.pomodoroFocus || 25;
+    document.getElementById('pomShortVal').textContent = s.pomodoroShort || 5;
+    document.getElementById('pomLongVal').textContent = s.pomodoroLong || 15;
+    this.renderSwatches('colorSwatches', user.accentColor);
+    this.renderSwatches('drawerSwatches', user.accentColor);
+    if (user.theme === 'light') { document.documentElement.dataset.theme='light'; document.getElementById('themeLight')?.classList.add('active'); document.getElementById('themeDark')?.classList.remove('active'); }
+  },
+
+  renderSwatches(containerId, active) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.innerHTML = ACCENT_COLORS.map(c=>`<div class="color-swatch ${c===active?'active':''}" style="background:${c}" data-color="${c}" onclick="Settings.applyAccent('${c}')"></div>`).join('');
+  },
+
+  applyAccent(color) {
+    document.documentElement.style.setProperty('--accent', color);
+    document.documentElement.style.setProperty('--accent-rgb', hexToRgb(color));
+    document.querySelectorAll('.color-swatch').forEach(s=>s.classList.toggle('active', s.dataset.color===color));
+    API.put('/me', { accentColor: color });
+    App.user.accentColor = color;
+  },
+
+  setTheme(theme, btn) {
+    document.documentElement.dataset.theme = theme;
+    document.querySelectorAll('.theme-btn').forEach(b=>b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    API.put('/me', { theme });
+    App.user.theme = theme;
+  },
+
+  updatePomLabel(inputId, labelId) {
+    document.getElementById(labelId).textContent = document.getElementById(inputId).value;
+  },
+
+  async saveProfile() {
+    const displayName = document.getElementById('settingName').value.trim();
+    if (!displayName) return;
+    const user = await API.put('/me', { displayName });
+    App.user = user;
+    App.updateUserUI();
+  },
+
+  async savePomo() {
+    const data = {
+      pomodoroFocus: +document.getElementById('pomFocus').value,
+      pomodoroShort: +document.getElementById('pomShort').value,
+      pomodoroLong: +document.getElementById('pomLong').value,
+    };
+    await API.put('/settings', data);
+    Object.assign(App.settings, data);
+    Pomo.setMode('focus', document.querySelector('.pomo-tab.active'));
+  },
+
+  async changePassword() {
+    const cur = document.getElementById('pwCurrent').value;
+    const nw = document.getElementById('pwNew').value;
+    const errEl = document.getElementById('pwError');
+    errEl.textContent = '';
+    try {
+      await API.put('/me/password', { currentPassword: cur, newPassword: nw });
+      errEl.style.color = 'var(--good)';
+      errEl.textContent = '✓ Contraseña actualizada';
+      document.getElementById('pwCurrent').value = '';
+      document.getElementById('pwNew').value = '';
+    } catch(e) { errEl.style.color='var(--danger)'; errEl.textContent = e.error || 'Error'; }
+  }
+};
+
+function hexToRgb(hex) {
+  const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return r ? `${parseInt(r[1],16)},${parseInt(r[2],16)},${parseInt(r[3],16)}` : '200,241,53';
+}
+
+const App = {
+  user: null,
+  settings: {},
+
+  async init() {
+    this.startClock();
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        this.user = await API.get('/me');
+        this.settings = await API.get('/settings');
+        await this.startApp();
+      } catch { this.showAuth(); }
+    } else { this.showAuth(); }
+  },
+
+  async login() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    const errEl = document.getElementById('loginError');
+    const btn = document.getElementById('loginBtn');
+    errEl.textContent = ''; btn.disabled = true; btn.textContent = 'Ingresando...';
+    try {
+      const data = await API.authPost('/login', { email, password: pass });
+      localStorage.setItem('token', data.token);
+      this.user = data.user;
+      this.settings = await API.get('/settings');
+      await this.startApp();
+    } catch(e) { errEl.textContent = e.error || 'Error al ingresar'; }
+    btn.disabled = false; btn.textContent = 'Ingresar';
+  },
+
+  async register() {
+    const displayName = document.getElementById('regName').value.trim();
+    const username = document.getElementById('regUser').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value;
+    const errEl = document.getElementById('regError');
+    const btn = document.getElementById('regBtn');
+    errEl.textContent = ''; btn.disabled = true; btn.textContent = 'Creando...';
+    try {
+      const data = await API.authPost('/register', { displayName, username, email, password });
+      localStorage.setItem('token', data.token);
+      this.user = data.user;
+      this.settings = await API.get('/settings');
+      await this.startApp();
+    } catch(e) { errEl.textContent = e.error || 'Error al registrar'; }
+    btn.disabled = false; btn.textContent = 'Crear cuenta';
+  },
+
+  async startApp() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appScreen').style.display = 'block';
+    this.applyUserTheme();
+    this.updateUserUI();
+    Pomo.init();
+    Music.init();
+    await Promise.all([Tasks.load(), Habits.load(), Notes.load(), Cal.load()]);
+    this.updateDashStats();
+    Settings.load();
+  },
+
+  applyUserTheme() {
+    if (this.user.accentColor) {
+      document.documentElement.style.setProperty('--accent', this.user.accentColor);
+      document.documentElement.style.setProperty('--accent-rgb', hexToRgb(this.user.accentColor));
+    }
+    if (this.user.theme === 'light') document.documentElement.dataset.theme = 'light';
+  },
+
+  updateUserUI() {
+    const name = this.user.displayName || this.user.username || 'Usuario';
+    const initial = name[0].toUpperCase();
+    document.getElementById('avatarBtn').textContent = initial;
+    document.getElementById('menuName').textContent = name;
+    document.getElementById('menuEmail').textContent = this.user.email;
+    document.getElementById('greetingName').textContent = name + '.';
+    document.getElementById('greetingSub').textContent = this.getMotivation();
+  },
+
+  updateDashStats() {
+    const done = Tasks.data.filter(t=>t.done).length;
+    const total = Tasks.data.length || 1;
+    const todayHabits = Habits.data.filter(h=>h.checks&&h.checks[6]).length;
+    const habitRate = Habits.data.length ? Math.round(todayHabits/Habits.data.length*100) : 0;
+    const focusMins = Math.round(Pomo.focusMins);
+    document.getElementById('miniStats').innerHTML = `
+      <div class="mini-stat"><div class="mini-stat-num">${done}/${Tasks.data.length}</div><div class="mini-stat-label">Tareas</div></div>
+      <div class="mini-stat"><div class="mini-stat-num" style="color:var(--good)">${habitRate}%</div><div class="mini-stat-label">Hábitos</div></div>
+      <div class="mini-stat"><div class="mini-stat-num" style="color:var(--accent2)">${focusMins}m</div><div class="mini-stat-label">Foco</div></div>`;
+    const h = new Date().getHours();
+    document.getElementById('greetingText').innerHTML = `${h<12?'Buenos días':h<18?'Buenas tardes':'Buenas noches'},<br><span class="accent-text" id="greetingName">${this.user.displayName||this.user.username}.</span>`;
+  },
+
+  getMotivation() {
+    const msgs = ['¿Qué vas a conquistar hoy?','Cada día cuenta. ¡Vamos!','Un hábito a la vez.','El foco es tu superpoder.','Hoy es un buen día para crecer.'];
+    return msgs[Math.floor(Math.random()*msgs.length)];
+  },
+
+  switchPanel(name, btn) {
+    document.querySelectorAll('.panel-section').forEach(p=>p.classList.remove('active'));
+    const target = document.getElementById('panel-'+name);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    if (name==='settings-profile') Settings.load();
+    if (name==='habits') Habits.render();
+    if (name==='notes') Notes.render();
+    if (name==='calendar') Cal.renderGrid();
+    // close menus
+    document.getElementById('userMenu').style.display='none';
+  },
+
+  toggleSettings() {
+    const d = document.getElementById('settingsDrawer');
+    d.style.display = d.style.display==='none' ? 'block' : 'none';
+    Settings.renderSwatches('drawerSwatches', this.user?.accentColor);
+  },
+
+  toggleMusic() {
+    const p = document.getElementById('musicPlayer');
+    const isOpen = p.style.display !== 'none';
+    p.style.display = isOpen ? 'none' : 'block';
+    document.getElementById('musicBtn').classList.toggle('active', !isOpen);
+  },
+
+  toggleUserMenu() {
+    const m = document.getElementById('userMenu');
+    m.style.display = m.style.display==='none' ? 'block' : 'none';
+  },
+
+  logout() {
+    localStorage.removeItem('token');
+    this.user = null;
+    document.getElementById('appScreen').style.display='none';
+    document.getElementById('authScreen').style.display='flex';
+    document.getElementById('loginEmail').value='';
+    document.getElementById('loginPass').value='';
+    document.getElementById('loginError').textContent='';
+    this.showLogin();
+  },
+
+  showLogin() {
+    document.getElementById('loginForm').style.display='block';
+    document.getElementById('registerForm').style.display='none';
+  },
+  showRegister() {
+    document.getElementById('loginForm').style.display='none';
+    document.getElementById('registerForm').style.display='block';
+  },
+
+  startClock() {
+    const tick = () => {
+      const n = new Date();
+      const h=String(n.getHours()).padStart(2,'0'), m=String(n.getMinutes()).padStart(2,'0'), s=String(n.getSeconds()).padStart(2,'0');
+      const clockEl = document.getElementById('topClock');
+      if (clockEl) clockEl.textContent = `${h}:${m}:${s}`;
+      const days=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+      const months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+      const dateEl = document.getElementById('topDate');
+      if (dateEl) dateEl.textContent = `${days[n.getDay()]} ${n.getDate()} ${months[n.getMonth()]}`;
+    };
+    tick(); setInterval(tick, 1000);
+  },
+
+  showAuth() {
+    document.getElementById('authScreen').style.display='flex';
+    document.getElementById('appScreen').style.display='none';
+  }
+};
+
+// Enter key on login/register
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loginPass')?.addEventListener('keydown', e=>{ if(e.key==='Enter') App.login(); });
+  document.getElementById('regPass')?.addEventListener('keydown', e=>{ if(e.key==='Enter') App.register(); });
+  App.init();
+});
+
+// Close menus clicking outside
+document.addEventListener('click', e=>{
+  if (!e.target.closest('#userMenu') && !e.target.closest('#avatarBtn'))
+    document.getElementById('userMenu').style.display='none';
+  if (!e.target.closest('#settingsDrawer') && !e.target.closest('#musicBtn') && !e.target.closest('.icon-btn'))
+    if (e.target.id!=='settingsDrawer') {}
+});
+
+
+// Patch App for standalone mode
+const _origInit = App.init.bind(App);
+App.init = async function(){
+  this.startClock();
+  const user = Auth.currentUser();
+  const token = localStorage.getItem('lifeos_token');
+  if(token && user){
+    this.user = user;
+    this.settings = await API.get('/settings');
+    await this.startApp();
+  } else { this.showAuth(); }
+};
+App.login = async function(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const errEl=document.getElementById('loginError');
+  const btn=document.getElementById('loginBtn');
+  errEl.textContent=''; btn.disabled=true; btn.textContent='Ingresando...';
+  try{
+    const user=Auth.login(email,pass);
+    this.user=user;
+    this.settings=await API.get('/settings');
+    await this.startApp();
+  }catch(e){ errEl.textContent=e.error||'Error al ingresar'; }
+  btn.disabled=false; btn.textContent='Ingresar';
+};
+App.register = async function(){
+  const displayName=document.getElementById('regName').value.trim();
+  const username=document.getElementById('regUser').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const password=document.getElementById('regPass').value;
+  const errEl=document.getElementById('regError');
+  const btn=document.getElementById('regBtn');
+  errEl.textContent=''; btn.disabled=true; btn.textContent='Creando...';
+  try{
+    const user=Auth.register(username,email,password,displayName);
+    this.user=user;
+    this.settings=await API.get('/settings');
+    await this.startApp();
+  }catch(e){ errEl.textContent=e.error||'Error'; }
+  btn.disabled=false; btn.textContent='Crear cuenta';
+};
+App.logout = function(){
+  Auth.clearUser();
+  this.user=null;
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('authScreen').style.display='flex';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  this.showLogin();
+};
+
+</script>
+</body>
+</html>
